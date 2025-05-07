@@ -1,0 +1,30 @@
+services:
+  tofu_http_backend:
+    build:
+      context: .
+      dockerfile: ./docker/tofu_http_backend/Dockerfile
+    ports:
+      - "8000:8000"
+    command: "python -m uvicorn main:app --host 0.0.0.0"
+    networks:
+      - app_network
+
+  postgres:
+    image: postgres:17
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: tofu_http_backend_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app_network
+
+volumes:
+  postgres_data:
+
+networks:
+  app_network:
+    driver: bridge
