@@ -5,4 +5,4 @@ class Settings(BaseSettings):
     postgres_db: str
 
 
-settings: Settings = Settings(postgres_db='asyncpg://user:password@postgres:5432/tofu_http_backend_db')
+settings: Settings = Settings(postgres_db='postgresql+asyncpg://user:password@postgres:5432/tofu_http_backend_db')

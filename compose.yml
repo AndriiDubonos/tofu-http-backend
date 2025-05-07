@@ -22,6 +22,22 @@ services:
     networks:
       - app_network
 
+  terraform_usage:
+    image: ghcr.io/opentofu/opentofu:latest
+    volumes:
+      - ./conf/terraform/usage:/terraform/
+    networks:
+      - app_network
+    working_dir: /terraform/
+
+  terraform_data_source:
+    image: ghcr.io/opentofu/opentofu:latest
+    volumes:
+      - ./conf/terraform/data_source:/terraform/
+    networks:
+      - app_network
+    working_dir: /terraform/
+
 volumes:
   postgres_data:
 
