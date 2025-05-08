@@ -26,7 +26,7 @@ async def get_latest_state(state_name: str, request: Request) -> bytes:  # TODO:
 
 
 @router.post('')
-async def update_state(state_name: str, lock_id: Annotated[UUID, Query(allias='ID')], request: Request) -> dict[str, str]:  # TODO: constraint string
+async def update_state(state_name: str, lock_id: Annotated[UUID, Query(alias='ID')], request: Request) -> dict[str, str]:  # TODO: constraint string
     async with get_default_unit_of_work(app=request.app) as unit_of_work:
         use_case = UpdateStateUseCase(unit_of_work=unit_of_work, error_class=ValidationException)
         await use_case.execute(state_name=state_name, raw_state_data=await request.body(), lock_id=lock_id)
