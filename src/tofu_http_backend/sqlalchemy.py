@@ -1,10 +1,14 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from sqlalchemy import MetaData
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, declarative_base
 
 from .settings import settings
+
+mainmetatadata = MetaData()
+Base = declarative_base(metadata=mainmetatadata)
 
 
 @asynccontextmanager
