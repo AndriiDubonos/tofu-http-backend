@@ -5,9 +5,9 @@
 4. `docker compose run terraform_data_source init`
 5. `docker compose run terraform_data_source apply -auto-approve`
 
-# Chalenges:
-- I was struggling to come up with a good name for the entity that is managed by the API. I stopped on the `state` but I feel that there is actually two entities. Main one (like "config" or "infrastructure") for which we could save multiple states. But I decided to keep a single name because API itself is using name `state` for both - e.g. locking of **states** (even though we are locking "config").
+# How to run tests
 
+### Example of requests
 ```
 b''
 INFO:     172.25.0.2:34466 - "GET /states/scalr HTTP/1.1" 404 Not Found
