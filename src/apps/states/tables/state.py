@@ -19,5 +19,4 @@ class State(Base):
         default=uuid.uuid4, server_default=server_default_uuid4
     )
     name = Column(String(length=64), nullable=False, unique=True)
-    hash = Column(String(length=256), nullable=False, unique=True)
     latest_version = Column(UUID(as_uuid=True), ForeignKey('states_state_version.id'), nullable=True)
