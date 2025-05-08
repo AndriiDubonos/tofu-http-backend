@@ -20,4 +20,4 @@ class State(Base):
     )
     name = Column(String(length=64), nullable=False, unique=True)
     hash = Column(String(length=256), nullable=False, unique=True)
-    latest_version = Column(UUID(as_uuid=True), ForeignKey('states_state_version.id'), index=True)
+    latest_version = Column(UUID(as_uuid=True), ForeignKey('states_state_version.id'), nullable=True)
