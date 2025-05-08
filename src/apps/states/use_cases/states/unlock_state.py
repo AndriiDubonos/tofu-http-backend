@@ -1,0 +1,20 @@
+from uuid import UUID
+
+from domain_model.unit_of_work.unit_of_work import UnitOfWork
+
+from apps.states.data_access.repositories.state.repo import StateRepository
+from apps.states.domain.states.unlock_state import unlock_state
+
+
+class UnlockStateUseCase:
+    def __init__(self, unit_of_work: UnitOfWork, error_class: type[Exception]):
+        self._unit_of_work = unit_of_work
+        self._error_class = error_class
+
+    async def execute(self, state_name: str, lock_id: UUID, force: bool) -> None:
+        repo = StateRepository(unit_of_work=self._unit_of_work)
+        state = await repo.get_state(state_name=state_name, lock=True)
+
+        state = unlock_state(state=state, lock_id=lock_id, force=force)
+
+        await repo.save(state=state)

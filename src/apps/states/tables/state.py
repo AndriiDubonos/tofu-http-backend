@@ -20,3 +20,4 @@ class State(Base):
     )
     name = Column(String(length=64), nullable=False, unique=True)
     latest_version = Column(UUID(as_uuid=True), ForeignKey('states_state_version.id'), nullable=True)
+    lock_id = Column(UUID(as_uuid=True), nullable=True)

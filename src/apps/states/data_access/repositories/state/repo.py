@@ -4,7 +4,6 @@ from domain_model.object_id import ObjectID
 from domain_model.unit_of_work.unit_of_work import UnitOfWork
 from domain_model.unit_of_work.units.db import BaseDBUnit
 from sqlalchemy import select
-from sqlalchemy.orm import joinedload
 
 from apps.common.unit_of_work.unit_type import UnitType
 from apps.states.models.state import State, StateVersion
@@ -21,29 +20,46 @@ class StateRepository:
         db_unit = cast(BaseDBUnit, await self._unit_of_work.get_unit(UnitType.DATABASE))
         return db_unit.get_db_session()
 
-    async def get_state(self, state_name: str) -> State:
+    async def get_state(self, state_name: str, lock: bool = False) -> State:
         session = await self._get_session()
-        stmt = (
+        
+        # First, get the state and apply lock if needed
+        state_stmt = (
             select(StateTable)
             .filter_by(name=state_name)
-            .options(joinedload(StateTable.latest_version))
         )
-        state = (await session.scalars(stmt)).first()
+        
+        if lock:
+            state_stmt = state_stmt.with_for_update(nowait=True)
+            
+        state = (await session.scalars(state_stmt)).first()
+        
         if state is None:
             return State(
                 id=ObjectID(None),
                 name=state_name,
                 latest_version=None,
+                lock_id=None,
             )
-
+        
+        # Then, get the related state version if it exists
+        latest_version = None
+        if state.latest_version is not None:
+            version_stmt = (
+                select(StateVersionTable)
+                .filter_by(id=state.latest_version)
+            )
+            latest_version = (await session.scalars(version_stmt)).first()
+        
         return State(
             id=ObjectID(state.id),
             name=state.name,
-            latest_version=None if state.latest_version is None else StateVersion(
-                id=ObjectID(state.latest_version.id),
-                version=state.latest_version.version,
-                hash=state.latest_version.hash,
-                path=state.latest_version.path,
+            lock_id=state.lock_id,
+            latest_version=None if latest_version is None else StateVersion(
+                id=ObjectID(latest_version.id),
+                version=latest_version.version,
+                hash=latest_version.hash,
+                path=latest_version.path,
             ),
         )
 
@@ -54,19 +70,23 @@ class StateRepository:
             state_table = StateTable(id=state.id.value, name=state.name)
             db_session.add(state_table)
         else:
-            state_table = db_session.get(StateTable, state.id.value)
+            state_table = await db_session.get(StateTable, state.id.value)
 
-        if state.latest_version is not None:
-            if state.latest_version.id.is_new:
-                latest_version_table = StateVersionTable(
-                    id=state.latest_version.id.value,
-                    state_id=state.id.value,
-                    version=state.latest_version.version,
-                    hash=state.latest_version.hash,
-                    path=state.latest_version.path,
-                )
-                db_session.add(latest_version_table)
+        if state.latest_version is not None and state.latest_version.id.is_new:
+            latest_version_table = StateVersionTable(
+                id=state.latest_version.id.value,
+                state_id=state.id.value,
+                version=state.latest_version.version,
+                hash=state.latest_version.hash,
+                path=state.latest_version.path,
+            )
+            db_session.add(latest_version_table)
 
-        state_table.latest_version_id = state.latest_version.id.value if state.latest_version is not None else None
+            # needed to populate `StateVersionTable` into DB - so it's possible to use it as FK value
+            await db_session.flush()
+
+        state_table.latest_version = state.latest_version.id.value if state.latest_version is not None else None
+        state_table.lock_id = state.lock_id
+        db_session.add(state_table)
 
         await db_session.flush()
