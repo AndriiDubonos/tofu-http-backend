@@ -9,6 +9,14 @@ services:
     networks:
       - app_network
 
+  tofu_http_backend_migrate:
+    build:
+      context: .
+      dockerfile: ./docker/tofu_http_backend/Dockerfile
+    command: "alembic upgrade head"
+    networks:
+      - app_network
+
   postgres:
     image: postgres:17
     ports:

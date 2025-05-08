@@ -1,7 +1,7 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Request, Body
+from fastapi import APIRouter, Request, Body, Query
 from fastapi.exceptions import ValidationException, HTTPException
 
 from apps.common.unit_of_work.default import get_default_unit_of_work
@@ -26,26 +26,26 @@ async def get_latest_state(state_name: str, request: Request) -> bytes:  # TODO:
 
 
 @router.post('')
-async def update_state(state_name: str, ID: UUID, request: Request) -> dict[str, str]:  # TODO: constraint string
+async def update_state(state_name: str, lock_id: Annotated[UUID, Query(allias='ID')], request: Request) -> dict[str, str]:  # TODO: constraint string
     async with get_default_unit_of_work(app=request.app) as unit_of_work:
         use_case = UpdateStateUseCase(unit_of_work=unit_of_work, error_class=ValidationException)
-        await use_case.execute(state_name=state_name, raw_state_data=await request.body(), lock_id=ID)
+        await use_case.execute(state_name=state_name, raw_state_data=await request.body(), lock_id=lock_id)
 
     return {"status": "success"}
 
 
 @router.post('/lock')
-async def lock_state(state_name: str, ID: Annotated[UUID, Body()], request: Request) -> dict[str, str]:  # TODO: constraint string
+async def lock_state(state_name: str, lock_id: Annotated[UUID, Body(alias='ID', embed=True)], request: Request) -> dict[str, str]:  # TODO: constraint string
     async with get_default_unit_of_work(app=request.app) as unit_of_work:
         use_case = LockStateUseCase(unit_of_work=unit_of_work, error_class=ValidationException)
-        await use_case.execute(state_name=state_name, lock_id=ID)
+        await use_case.execute(state_name=state_name, lock_id=lock_id)
     return {"status": "success"}
 
 
 @router.post('/unlock')
-async def unlock_state(state_name: str, ID: Annotated[UUID, Body()], request: Request) -> dict[str, str]:  # TODO: constraint string
+async def unlock_state(state_name: str, lock_id: Annotated[UUID, Body(alias='ID', embed=True)], request: Request) -> dict[str, str]:  # TODO: constraint string
     async with get_default_unit_of_work(app=request.app) as unit_of_work:
         use_case = UnlockStateUseCase(unit_of_work=unit_of_work, error_class=ValidationException)
-        await use_case.execute(state_name=state_name, lock_id=ID, force=False)
+        await use_case.execute(state_name=state_name, lock_id=lock_id, force=False)
 
     return {"status": "success"}
