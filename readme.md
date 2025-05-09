@@ -13,10 +13,15 @@ This project implements a custom HTTP backend for OpenTofu/Terraform state manag
 ## Architecture
 
 Application is built with usage of Ports and Adapters architecture.
+
 Business domain split into subdomains (while only single domain in this project exists).
+
 Business logic is implemented in the domain layer (`domain/`).
+
 Data access (postgres, media storage) is implemented in the infrastructure layer (`data_access/`).
+
 Available actions for the system are implemented in the use cases layer (`use_cases/`).
+
 State is passed and managed by the Unit of Work Pattern.
 
 # How to run
