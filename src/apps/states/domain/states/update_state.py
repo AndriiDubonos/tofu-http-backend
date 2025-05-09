@@ -10,16 +10,20 @@ from apps.states.models.state import StateVersion, State
 
 def update_state(state: State, raw_state_data: bytes, lock_id: UUID) -> State:
     if state.lock_id is None:
-        raise MissingLockError(f"State {state.name} is not locked and can't be updated.")
+        raise MissingLockError(
+            f"State {state.name} is not locked and can't be updated."
+        )
     if state.lock_id != lock_id:
         raise ConcurrentLockError(f"State {state.name} is locked by another user.")
 
     state_version_id = ObjectID(id_=None)
     new_state_version = StateVersion(
         id=state_version_id,
-        version=loads(raw_state_data.decode('utf8'))['version'],
+        version=loads(raw_state_data.decode("utf8"))["version"],
         hash=_get_hash(raw_state_data=raw_state_data),
-        path=_generate_path_for_state(state=state, state_version_id=state_version_id.value)
+        path=_generate_path_for_state(
+            state=state, state_version_id=state_version_id.value
+        ),
     )
     state.latest_version = new_state_version
     return state
@@ -32,4 +36,4 @@ def _get_hash(raw_state_data: bytes) -> str:
 
 
 def _generate_path_for_state(state: State, state_version_id: UUID):
-    return f'{state.id.value}/versions/{state_version_id}.json'
+    return f"{state.id.value}/versions/{state_version_id}.json"

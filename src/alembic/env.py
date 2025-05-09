@@ -67,9 +67,9 @@ async def run_async_migrations() -> None:
     """
     ini_section = config.get_section(config.config_ini_section, {})
 
-    db_url = context.get_x_argument(as_dictionary=True).get('dburl')
+    db_url = context.get_x_argument(as_dictionary=True).get("dburl")
     if db_url:
-        ini_section['sqlalchemy.url'] = db_url
+        ini_section["sqlalchemy.url"] = db_url
 
     connectable = async_engine_from_config(
         ini_section,

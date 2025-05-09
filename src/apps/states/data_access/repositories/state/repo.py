@@ -29,13 +29,10 @@ class StateRepository:
 
     async def get_state(self, state_name: str, lock: bool) -> State:
         session = await self._get_session()
-        
+
         # First, get the state and apply lock if needed
-        state_stmt = (
-            select(StateTable)
-            .filter_by(name=state_name)
-        )
-        
+        state_stmt = select(StateTable).filter_by(name=state_name)
+
         if lock:
             state_stmt = state_stmt.with_for_update(nowait=True)
 
@@ -44,9 +41,11 @@ class StateRepository:
         except OperationalError as e:
             if "could not obtain lock" in str(e) or "deadlock detected" in str(e):
                 # State exists but is locked
-                raise StateLockedError(f"State '{state_name}' is currently locked by another transaction")
+                raise StateLockedError(
+                    f"State '{state_name}' is currently locked by another transaction"
+                )
             raise
-        
+
         if state is None:
             return State(
                 id=ObjectID(None),
@@ -54,21 +53,20 @@ class StateRepository:
                 latest_version=None,
                 lock_id=None,
             )
-        
+
         # Then, get the related state version if it exists
         latest_version = None
         if state.latest_version is not None:
-            version_stmt = (
-                select(StateVersionTable)
-                .filter_by(id=state.latest_version)
-            )
+            version_stmt = select(StateVersionTable).filter_by(id=state.latest_version)
             latest_version = (await session.scalars(version_stmt)).first()
-        
+
         return State(
             id=ObjectID(state.id),
             name=state.name,
             lock_id=state.lock_id,
-            latest_version=None if latest_version is None else StateVersion(
+            latest_version=None
+            if latest_version is None
+            else StateVersion(
                 id=ObjectID(latest_version.id),
                 version=latest_version.version,
                 hash=latest_version.hash,
@@ -99,7 +97,9 @@ class StateRepository:
             # needed to populate `StateVersionTable` into DB - so it's possible to use it as FK value
             await db_session.flush()
 
-        state_table.latest_version = state.latest_version.id.value if state.latest_version is not None else None
+        state_table.latest_version = (
+            state.latest_version.id.value if state.latest_version is not None else None
+        )
         state_table.lock_id = state.lock_id
         db_session.add(state_table)
 

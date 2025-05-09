@@ -12,11 +12,11 @@ from apps.states.use_cases.states.lock_state import LockStateUseCase
 from apps.states.use_cases.states.unlock_state import UnlockStateUseCase
 from apps.states.use_cases.states.update_state import UpdateStateUseCase
 
-router = APIRouter(prefix='/states/{state_name}')
+router = APIRouter(prefix="/states/{state_name}")
 
 
-@router.get('')
-async def get_latest_state(state_name: str, request: Request) -> Response:  # TODO: constraint string
+@router.get("")
+async def get_latest_state(state_name: str, request: Request) -> Response:
     async with get_default_unit_of_work(app=request.app) as unit_of_work:
         use_case = GetLatestStateUseCase(unit_of_work=unit_of_work)
         latest_state = await use_case.execute(state_name=state_name)
@@ -27,20 +27,30 @@ async def get_latest_state(state_name: str, request: Request) -> Response:  # TO
     return Response(latest_state)
 
 
-@router.post('')
-async def update_state(state_name: str, lock_id: Annotated[UUID, Query(alias='ID')], request: Request) -> dict[str, str]:  # TODO: constraint string
+@router.post("")
+async def update_state(
+    state_name: str, lock_id: Annotated[UUID, Query(alias="ID")], request: Request
+) -> dict[str, str]:
     async with get_default_unit_of_work(app=request.app) as unit_of_work:
         use_case = UpdateStateUseCase(unit_of_work=unit_of_work)
         try:
-            await use_case.execute(state_name=state_name, raw_state_data=await request.body(), lock_id=lock_id)
+            await use_case.execute(
+                state_name=state_name,
+                raw_state_data=await request.body(),
+                lock_id=lock_id,
+            )
         except BaseStateError as e:
             raise HTTPException(status_code=404, detail=e.message)
 
     return {"status": "success"}
 
 
-@router.post('/lock')
-async def lock_state(state_name: str, lock_id: Annotated[UUID, Body(alias='ID', embed=True)], request: Request) -> dict[str, str]:  # TODO: constraint string
+@router.post("/lock")
+async def lock_state(
+    state_name: str,
+    lock_id: Annotated[UUID, Body(alias="ID", embed=True)],
+    request: Request,
+) -> dict[str, str]:
     async with get_default_unit_of_work(app=request.app) as unit_of_work:
         use_case = LockStateUseCase(unit_of_work=unit_of_work)
         try:
@@ -51,8 +61,12 @@ async def lock_state(state_name: str, lock_id: Annotated[UUID, Body(alias='ID', 
     return {"status": "success"}
 
 
-@router.post('/unlock')
-async def unlock_state(state_name: str, lock_id: Annotated[UUID, Body(alias='ID', embed=True)], request: Request) -> dict[str, str]:  # TODO: constraint string
+@router.post("/unlock")
+async def unlock_state(
+    state_name: str,
+    lock_id: Annotated[UUID, Body(alias="ID", embed=True)],
+    request: Request,
+) -> dict[str, str]:
     async with get_default_unit_of_work(app=request.app) as unit_of_work:
         use_case = UnlockStateUseCase(unit_of_work=unit_of_work)
         try:

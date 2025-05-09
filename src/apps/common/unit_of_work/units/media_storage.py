@@ -35,4 +35,3 @@ class MinIOMediaStorageUnit(BaseMediaStorageUnit):
 
     def get_client(self) -> Minio:
         return self._client
-

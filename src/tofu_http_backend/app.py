@@ -11,7 +11,10 @@ from .sqlalchemy import sqlalchemy_lifespan
 def create_app(settings: Settings):
     @asynccontextmanager
     async def lifespan(app_instance: FastAPI):
-        async with sqlalchemy_lifespan(app_instance=app_instance, settings=settings), minio_lifespan(app_instance=app_instance, settings=settings):
+        async with (
+            sqlalchemy_lifespan(app_instance=app_instance, settings=settings),
+            minio_lifespan(app_instance=app_instance, settings=settings),
+        ):
             yield
 
     app = FastAPI(lifespan=lifespan)

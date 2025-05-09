@@ -10,13 +10,16 @@ from apps.states.data_access.media_storage.backends.base import BaseMediaStorage
 
 class MinIOMediaStorageBackend(BaseMediaStorageBackend):
     async def _get_client(self) -> Minio:
-        unit = cast(MinIOMediaStorageUnit, await self._unit_of_work.get_unit(unit_type=UnitType.MEDIA_STORAGE))
+        unit = cast(
+            MinIOMediaStorageUnit,
+            await self._unit_of_work.get_unit(unit_type=UnitType.MEDIA_STORAGE),
+        )
         return unit.get_client()
 
     async def store(self, path: str, raw_state_data: bytes) -> None:
         client = await self._get_client()
         client.put_object(
-            bucket_name='states',
+            bucket_name="states",
             object_name=path,
             data=BytesIO(raw_state_data),
             length=len(raw_state_data),
@@ -29,7 +32,9 @@ class MinIOMediaStorageBackend(BaseMediaStorageBackend):
             response = client.get_object("states", path)
 
             if response.status != 200:
-                raise Exception(f"Unexpected response {response.status}: `{response.data}")
+                raise Exception(
+                    f"Unexpected response {response.status}: `{response.data}"
+                )
 
             return response.data
         finally:

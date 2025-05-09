@@ -17,18 +17,18 @@ def fastapi_app():
     # Apply migrations to test db
     asyncio.run(create_database(testing_settings.postgres_db))
 
-    db_url_arg = f'dburl={testing_settings.postgres_db}'
-    alembic.config.main(argv=['-x', db_url_arg, 'upgrade', 'head'])
+    db_url_arg = f"dburl={testing_settings.postgres_db}"
+    alembic.config.main(argv=["-x", db_url_arg, "upgrade", "head"])
     # Rollback after each connect_db from before_server_start
     yield app
 
     # Rollback db
-    alembic.config.main(argv=['-x', db_url_arg, 'downgrade', 'base'])
+    alembic.config.main(argv=["-x", db_url_arg, "downgrade", "base"])
 
 
 async def create_database(postgres_db: str):
-    db_host, db_name = postgres_db.rsplit('/', maxsplit=1)
-    engine = create_async_engine(f'{db_host}/postgres')
+    db_host, db_name = postgres_db.rsplit("/", maxsplit=1)
+    engine = create_async_engine(f"{db_host}/postgres")
     async with engine.connect() as conn:
         await conn.execution_options(isolation_level="AUTOCOMMIT")
         await conn.execute(text(f"DROP DATABASE IF EXISTS {db_name};"))
