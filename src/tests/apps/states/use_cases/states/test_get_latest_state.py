@@ -16,7 +16,7 @@ async def _execute(
 ) -> None | bytes:
     async with get_active_unit_of_work(active_db_session=active_transaction_session, media_storage_unit=InMemoryMediaStorageUnit(storage=media_store)) as uow:
         states_media_storage = StatesMediaStorage(InMemoryMediaStorageBackend(unit_of_work=uow))
-        use_case = GetLatestStateUseCase(unit_of_work=uow, error_class=Exception, states_media_storage=states_media_storage)
+        use_case = GetLatestStateUseCase(unit_of_work=uow, states_media_storage=states_media_storage)
         return await use_case.execute(state_name=state_name)
 
 

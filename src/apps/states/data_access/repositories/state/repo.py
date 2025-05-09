@@ -1,14 +1,21 @@
+from datetime import datetime, UTC
 from typing import cast
 
 from domain_model.object_id import ObjectID
 from domain_model.unit_of_work.unit_of_work import UnitOfWork
 from domain_model.unit_of_work.units.db import BaseDBUnit
 from sqlalchemy import select
+from sqlalchemy.exc import OperationalError
 
 from apps.common.unit_of_work.unit_type import UnitType
 from apps.states.models.state import State, StateVersion
 from apps.states.tables.state import State as StateTable
 from apps.states.tables.state_version import StateVersion as StateVersionTable
+
+
+class StateLockedError(Exception):
+    def __init__(self, message):
+        self.message = message
 
 
 class StateRepository:
@@ -20,7 +27,7 @@ class StateRepository:
         db_unit = cast(BaseDBUnit, await self._unit_of_work.get_unit(UnitType.DATABASE))
         return db_unit.get_db_session()
 
-    async def get_state(self, state_name: str, lock: bool = False) -> State:
+    async def get_state(self, state_name: str, lock: bool) -> State:
         session = await self._get_session()
         
         # First, get the state and apply lock if needed
@@ -31,8 +38,14 @@ class StateRepository:
         
         if lock:
             state_stmt = state_stmt.with_for_update(nowait=True)
-            
-        state = (await session.scalars(state_stmt)).first()
+
+        try:
+            state = (await session.scalars(state_stmt)).first()
+        except OperationalError as e:
+            if "could not obtain lock" in str(e) or "deadlock detected" in str(e):
+                # State exists but is locked
+                raise StateLockedError(f"State '{state_name}' is currently locked by another transaction")
+            raise
         
         if state is None:
             return State(
@@ -71,6 +84,7 @@ class StateRepository:
             db_session.add(state_table)
         else:
             state_table = await db_session.get(StateTable, state.id.value)
+            state_table.modified_date = datetime.now(UTC)
 
         if state.latest_version is not None and state.latest_version.id.is_new:
             latest_version_table = StateVersionTable(

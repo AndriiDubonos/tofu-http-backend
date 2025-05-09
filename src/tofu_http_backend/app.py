@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from .api import routers
+from .minio import minio_lifespan
 from .settings.base import Settings
 from .sqlalchemy import sqlalchemy_lifespan
 
@@ -10,7 +11,7 @@ from .sqlalchemy import sqlalchemy_lifespan
 def create_app(settings: Settings):
     @asynccontextmanager
     async def lifespan(app_instance: FastAPI):
-        async with sqlalchemy_lifespan(app_instance=app_instance, settings=settings):
+        async with sqlalchemy_lifespan(app_instance=app_instance, settings=settings), minio_lifespan(app_instance=app_instance, settings=settings):
             yield
 
     app = FastAPI(lifespan=lifespan)

@@ -7,9 +7,8 @@ from apps.states.domain.states.lock_state import lock_state
 
 
 class LockStateUseCase:
-    def __init__(self, unit_of_work: UnitOfWork, error_class: type[Exception]):
+    def __init__(self, unit_of_work: UnitOfWork):
         self._unit_of_work = unit_of_work
-        self._error_class = error_class
 
     async def execute(self, state_name: str, lock_id: UUID) -> None:
         repo = StateRepository(unit_of_work=self._unit_of_work)

@@ -1,8 +1,11 @@
 from domain_model.unit_of_work.units.base import BaseUnit
+from minio import Minio
 
 
 class BaseMediaStorageUnit(BaseUnit):
-    pass
+    async def handle_exception(self, exc_type, exc_val, exc_tb):
+        # media storages are not transactional
+        pass
 
 
 class MediaStore:
@@ -23,3 +26,13 @@ class InMemoryMediaStorageUnit(BaseMediaStorageUnit):
 
     def get_storage(self) -> MediaStore:
         return self._storage
+
+
+class MinIOMediaStorageUnit(BaseMediaStorageUnit):
+    def __init__(self, client: Minio):
+        super().__init__()
+        self._client = client
+
+    def get_client(self) -> Minio:
+        return self._client
+

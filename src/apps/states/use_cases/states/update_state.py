@@ -8,15 +8,14 @@ from apps.states.domain.states.update_state import update_state
 
 
 class UpdateStateUseCase:
-    def __init__(self, unit_of_work: UnitOfWork, error_class: type[Exception], states_media_storage: StatesMediaStorage = None):
+    def __init__(self, unit_of_work: UnitOfWork, states_media_storage: StatesMediaStorage = None):
         self._unit_of_work = unit_of_work
-        self._error_class = error_class
 
         self._media_storage = states_media_storage or get_default_states_media_storage(unit_of_work=unit_of_work)
 
     async def execute(self, state_name: str, raw_state_data: bytes, lock_id: UUID) -> None:
         repo = StateRepository(unit_of_work=self._unit_of_work)
-        state = await repo.get_state(state_name=state_name)
+        state = await repo.get_state(state_name=state_name, lock=True)
 
         state = update_state(state=state, raw_state_data=raw_state_data, lock_id=lock_id)
 

@@ -4,3 +4,4 @@ a-domain-model==0.1.6
 asyncpg==0.30.0
 sqlalchemy[asyncio]==2.0.40
 alembic==1.15.2
+minio==7.2.15

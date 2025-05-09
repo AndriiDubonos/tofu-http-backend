@@ -4,14 +4,15 @@ from hashlib import sha256
 
 from domain_model.object_id import ObjectID
 
+from apps.states.domain.states.errors import ConcurrentLockError, MissingLockError
 from apps.states.models.state import StateVersion, State
 
 
 def update_state(state: State, raw_state_data: bytes, lock_id: UUID) -> State:
     if state.lock_id is None:
-        raise ValueError(f"State {state.name} is not locked and can't be updated.")
+        raise MissingLockError(f"State {state.name} is not locked and can't be updated.")
     if state.lock_id != lock_id:
-        raise ValueError(f"State {state.name} is locked by another user.")
+        raise ConcurrentLockError(f"State {state.name} is locked by another user.")
 
     state_version_id = ObjectID(id_=None)
     new_state_version = StateVersion(
