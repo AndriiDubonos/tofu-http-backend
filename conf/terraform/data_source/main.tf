@@ -21,6 +21,6 @@ resource "null_resource" "example" {
         always_run = timestamp()
     }
     provisioner "local-exec" {
-        command = "echo Hello from the custom HTTP backend for OpenTofu! ${data.terraform_remote_state.foo.outputs.example}"
+        command = "echo Hello from the custom HTTP backend for OpenTofu! ${jsonencode(data.terraform_remote_state.foo.outputs)}"
     }
 }

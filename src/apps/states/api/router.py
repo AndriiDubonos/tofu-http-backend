@@ -1,22 +1,28 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Request, Body, Query
+from fastapi import APIRouter, Request, Body, Query, Depends
 from fastapi.exceptions import HTTPException
 from starlette.responses import Response
 
 from apps.common.unit_of_work.default import get_default_unit_of_work
+from apps.states.api.dependencies import state_name_extractor, get_current_username
 from apps.states.domain.states.errors import BaseStateError, ConcurrentLockError
 from apps.states.use_cases.states.get_latest_state import GetLatestStateUseCase
 from apps.states.use_cases.states.lock_state import LockStateUseCase
 from apps.states.use_cases.states.unlock_state import UnlockStateUseCase
 from apps.states.use_cases.states.update_state import UpdateStateUseCase
 
-router = APIRouter(prefix="/states/{state_name}")
+router = APIRouter(
+    prefix="/states/{state_name}",
+    dependencies=[Depends(get_current_username)],
+)
 
 
 @router.get("")
-async def get_latest_state(state_name: str, request: Request) -> Response:
+async def get_latest_state(
+    state_name: Annotated[str, Depends(state_name_extractor)], request: Request
+) -> Response:
     async with get_default_unit_of_work(app=request.app) as unit_of_work:
         use_case = GetLatestStateUseCase(unit_of_work=unit_of_work)
         latest_state = await use_case.execute(state_name=state_name)
@@ -29,7 +35,9 @@ async def get_latest_state(state_name: str, request: Request) -> Response:
 
 @router.post("")
 async def update_state(
-    state_name: str, lock_id: Annotated[UUID, Query(alias="ID")], request: Request
+    state_name: Annotated[str, Depends(state_name_extractor)],
+    lock_id: Annotated[UUID, Query(alias="ID")],
+    request: Request,
 ) -> dict[str, str]:
     async with get_default_unit_of_work(app=request.app) as unit_of_work:
         use_case = UpdateStateUseCase(unit_of_work=unit_of_work)
@@ -47,7 +55,7 @@ async def update_state(
 
 @router.post("/lock")
 async def lock_state(
-    state_name: str,
+    state_name: Annotated[str, Depends(state_name_extractor)],
     lock_id: Annotated[UUID, Body(alias="ID", embed=True)],
     request: Request,
 ) -> dict[str, str]:
@@ -63,7 +71,7 @@ async def lock_state(
 
 @router.post("/unlock")
 async def unlock_state(
-    state_name: str,
+    state_name: Annotated[str, Depends(state_name_extractor)],
     lock_id: Annotated[UUID, Body(alias="ID", embed=True)],
     request: Request,
 ) -> dict[str, str]:

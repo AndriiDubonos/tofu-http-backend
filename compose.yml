@@ -71,6 +71,9 @@ services:
       - ./conf/terraform/usage:/terraform/
     networks:
       - app_network
+    environment:
+      - TF_HTTP_USERNAME=user
+      - TF_HTTP_PASSWORD=password
     working_dir: /terraform/
 
   terraform_data_source:
@@ -79,6 +82,9 @@ services:
       - ./conf/terraform/data_source:/terraform/
     networks:
       - app_network
+    environment:
+      - TF_HTTP_USERNAME=user
+      - TF_HTTP_PASSWORD=password
     working_dir: /terraform/
 
 volumes:
