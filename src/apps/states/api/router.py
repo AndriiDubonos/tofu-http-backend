@@ -2,10 +2,11 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Request, Body, Query
-from fastapi.exceptions import ValidationException, HTTPException
+from fastapi.exceptions import HTTPException
 from starlette.responses import Response
 
 from apps.common.unit_of_work.default import get_default_unit_of_work
+from apps.states.domain.states.errors import BaseStateError, ConcurrentLockError
 from apps.states.use_cases.states.get_latest_state import GetLatestStateUseCase
 from apps.states.use_cases.states.lock_state import LockStateUseCase
 from apps.states.use_cases.states.unlock_state import UnlockStateUseCase
@@ -30,7 +31,10 @@ async def get_latest_state(state_name: str, request: Request) -> Response:  # TO
 async def update_state(state_name: str, lock_id: Annotated[UUID, Query(alias='ID')], request: Request) -> dict[str, str]:  # TODO: constraint string
     async with get_default_unit_of_work(app=request.app) as unit_of_work:
         use_case = UpdateStateUseCase(unit_of_work=unit_of_work)
-        await use_case.execute(state_name=state_name, raw_state_data=await request.body(), lock_id=lock_id)
+        try:
+            await use_case.execute(state_name=state_name, raw_state_data=await request.body(), lock_id=lock_id)
+        except BaseStateError as e:
+            raise HTTPException(status_code=404, detail=e.message)
 
     return {"status": "success"}
 
@@ -39,7 +43,11 @@ async def update_state(state_name: str, lock_id: Annotated[UUID, Query(alias='ID
 async def lock_state(state_name: str, lock_id: Annotated[UUID, Body(alias='ID', embed=True)], request: Request) -> dict[str, str]:  # TODO: constraint string
     async with get_default_unit_of_work(app=request.app) as unit_of_work:
         use_case = LockStateUseCase(unit_of_work=unit_of_work)
-        await use_case.execute(state_name=state_name, lock_id=lock_id)
+        try:
+            await use_case.execute(state_name=state_name, lock_id=lock_id)
+        except ConcurrentLockError as e:
+            raise HTTPException(status_code=409, detail=e.message)
+
     return {"status": "success"}
 
 
@@ -47,6 +55,9 @@ async def lock_state(state_name: str, lock_id: Annotated[UUID, Body(alias='ID', 
 async def unlock_state(state_name: str, lock_id: Annotated[UUID, Body(alias='ID', embed=True)], request: Request) -> dict[str, str]:  # TODO: constraint string
     async with get_default_unit_of_work(app=request.app) as unit_of_work:
         use_case = UnlockStateUseCase(unit_of_work=unit_of_work)
-        await use_case.execute(state_name=state_name, lock_id=lock_id, force=False)
+        try:
+            await use_case.execute(state_name=state_name, lock_id=lock_id, force=False)
+        except ConcurrentLockError as e:
+            raise HTTPException(status_code=409, detail=e.message)
 
     return {"status": "success"}

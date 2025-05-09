@@ -1,5 +1,6 @@
 services:
   tofu_http_backend:
+    image: tofu_http_backend_image
     build:
       context: .
       dockerfile: ./docker/tofu_http_backend/Dockerfile
@@ -13,9 +14,7 @@ services:
         condition: service_completed_successfully
 
   tofu_http_backend_migrate:
-    build:
-      context: .
-      dockerfile: ./docker/tofu_http_backend/Dockerfile
+    image: tofu_http_backend_image
     command: "alembic upgrade head"
     networks:
       - app_network
