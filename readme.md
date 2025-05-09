@@ -1,3 +1,5 @@
+# Overview
+
 # How to run
 1. `docker compose up`
 2. `docker compose run terraform_usage init`
@@ -6,6 +8,9 @@
 5. `docker compose run terraform_data_source apply -auto-approve`
 
 # How to run tests
+1. `docker compose up`
+2. `docker exec -it tofu_http_backend sh`
+3. `pytest`
 
 ### Example of requests
 ```

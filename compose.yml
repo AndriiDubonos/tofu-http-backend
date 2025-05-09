@@ -4,6 +4,7 @@ services:
     build:
       context: .
       dockerfile: ./docker/tofu_http_backend/Dockerfile
+    container_name: tofu_http_backend
     ports:
       - "8000:8000"
     command: "python -m uvicorn main:app --host 0.0.0.0"
