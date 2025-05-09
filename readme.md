@@ -1,5 +1,24 @@
 # Overview
 
+This project implements a custom HTTP backend for OpenTofu/Terraform state management. It provides a REST API that allows storing, retrieving, locking, and unlocking Terraform state files.
+
+## Key Features
+
+- **State Storage**: Stores Terraform state files in MinIO
+- **State Locking**: Prevents concurrent modifications to state files through a locking mechanism
+- **State Versioning**: Maintains a history of state versions for auditing and rollback capabilities
+- **Authentication**: Basic HTTP authentication for securing state access
+- **PostgreSQL Backend**: Uses PostgreSQL for storing metadata about states and locks
+
+## Architecture
+
+Application is built with usage of Ports and Adapters architecture.
+Business domain split into subdomains (while only single domain in this project exists).
+Business logic is implemented in the domain layer (`domain/`).
+Data access (postgres, media storage) is implemented in the infrastructure layer (`data_access/`).
+Available actions for the system are implemented in the use cases layer (`use_cases/`).
+State is passed and managed by the Unit of Work Pattern.
+
 # How to run
 1. `docker compose up`
 2. `docker compose run terraform_usage init`
